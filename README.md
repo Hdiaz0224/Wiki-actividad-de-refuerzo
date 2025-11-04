@@ -61,7 +61,7 @@ El sistema está compuesto por:
 1. **Nodo Sensor (Esclavo I2C):**
    Lee la temperatura desde el sensor LM35/TMP36 y envía el valor al nodo maestro.
 
-2. **Nodo Maestro (ESP8266 o Arduino con WiFi):**
+2. **Nodo Maestro (Arduino UNO conectado a ESP8266 para WiFi ):**
    Recibe la temperatura del esclavo, la muestra en el monitor serial y la envía a ThingSpeak para su almacenamiento y visualización.
 
 3. **Plataforma ThingSpeak:**
