@@ -2,7 +2,7 @@
 
 ## Descripción del Proyecto
 
-Este proyecto consiste en el desarrollo de un sistema IoT para el monitoreo de temperatura, utilizando dos microcontroladores conectados mediante comunicación I2C y un sensor de temperatura LM35 (o TMP36).
+Este proyecto consiste en el desarrollo de un sistema IoT para el monitoreo de temperatura, utilizando dos microcontroladores conectados mediante comunicación I2C y un sensor de temperatura LM35.
 El sistema envía los datos a la plataforma **ThingSpeak**, donde se visualizan en tiempo real junto con el historial de valores, además de generar alertas cuando la temperatura supera los 30°C.
 
 ---
@@ -21,11 +21,11 @@ El sistema envía los datos a la plataforma **ThingSpeak**, donde se visualizan 
 
 **Herramientas y recursos utilizados:**
 
-* Dos microcontroladores con comunicación I2C (por ejemplo, 1 ESP8266 y 1 Arduino UNO).
-* Sensor de temperatura LM35 o TMP36.
+* Dos microcontroladores con comunicación I2C (2 Arduino UNO).
+* Sensor de temperatura LM35.
 * Un LED como actuador.
 * Cuenta en ThingSpeak para visualización de datos.
-* Conexión a Internet para el envío de información.
+* Conexión a Internet para el envío de información (ESP8266).
 * Lenguaje de programación: C++ (Arduino IDE).
 
 ---
@@ -101,7 +101,8 @@ Durante las pruebas se verificaron los siguientes aspectos:
 
 Se adjuntan capturas del panel de **ThingSpeak** con los datos registrados:
 
-*(Inserta aquí las imágenes del dashboard y las gráficas generadas)*
+<img width="1080" height="699" alt="image" src="https://github.com/user-attachments/assets/afed73cd-4a39-41a1-8e20-1e116e0390b4" />
+
 
 
 
@@ -139,3 +140,6 @@ Este proyecto evidencia la aplicabilidad de soluciones IoT en el monitoreo ambie
 * Arduino Documentation. [https://www.arduino.cc/reference](https://www.arduino.cc/reference)
 * Espressif ESP8266 AT Commands Set.
 * Sensor LM35 Datasheet.
+* https://youtu.be/R9t4XWNwYr0?si=XWSwCkWOmI1Bjft_
+* https://youtu.be/S7pkknfh3uw?si=Edef57zItW0cEOQG
+* https://youtu.be/rEBT9evGeFY?si=KPQWpx8lEG-oUTSZ
