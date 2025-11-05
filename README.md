@@ -71,149 +71,115 @@ El sistema está compuesto por:
 
 ## Código Fuente
 
-A continuación se incluyen los fragmentos de código utilizados para la implementación.
+Sistema con dos Arduinos comunicados por I2C:
+- **Esclavo**: Lee sensor LM35
+- **Maestro**: Recibe datos, controla LED y envía a ThingSpeak
 
-### Código del Nodo Esclavo (Sensor)
+---
 
+### NODO ESCLAVO
+
+### `setup()`
 ```cpp
-#include <Wire.h>
-
-#define SLAVE_ADDR 8     // Dirección I2C del esclavo
-#define SENSOR_PIN A0    // Pin donde está el LM35
-
-float temperature = 0;
-
-void setup() {
-  Wire.begin(SLAVE_ADDR);   // Iniciar como esclavo I2C
-  Wire.onRequest(sendData); // Función que se llama cuando el maestro pide datos
-  Serial.begin(9600);
-  Serial.println("Peripheral listo...");
-}
-
-void loop() {
-  int sensorValue = analogRead(SENSOR_PIN);
-  temperature = (sensorValue * 5.0 * 100.0) / 1024.0;  // Conversión LM35 → °C
-  Serial.print("Temperatura medida: ");
-  Serial.print(temperature);
-  Serial.println(" °C");
-  delay(1000); // Medición cada 1 segundo
-}
-
-void sendData() {
-  Wire.write((byte*)&temperature, sizeof(temperature)); // Enviar temperatura al maestro
-}
-
+Wire.begin(SLAVE_ADDR);   // Inicia como esclavo I2C (dirección 8)
+Wire.onRequest(sendData); // Registra callback para enviar datos
 ```
 
-### Código del Nodo Maestro (WiFi y Envío a ThingSpeak)
-
+### `loop()`
 ```cpp
-#include <Wire.h>
-#include <SoftwareSerial.h>
+int sensorValue = analogRead(SENSOR_PIN);
+temperature = (sensorValue * 5.0 * 100.0) / 1024.0;
+```
 
-// --- Pines ESP8266 ---
-#define RX_ESP 2   // Arduino RX (recibe del TX del ESP)
-#define TX_ESP 3   // Arduino TX (envía al RX del ESP)
-SoftwareSerial esp8266(RX_ESP, TX_ESP);
+- Lee el sensor analógico (0-1023)
+- Convierte a temperatura: LM35 entrega 10mV/°C
+- Se repite cada 1 segundo
 
-// --- Pines y direcciones ---
-#define SLAVE_ADDR 8
-#define LED_PIN 7
-
-// --- Credenciales WiFi y ThingSpeak ---
-const char* SSID = "S20+";             // CAMBIAR ESTO
-const char* PASSWORD = "12309876";     // CAMBIAR ESTO
-String apiKey = "2H2X4KFU8FEI4KER";            // ESTO ES DE THINGSPEAK
-const char* server = "api.thingspeak.com";
-
-// --- Variables ---
-float temperatura = 0;
-
-void setup() {
-  Serial.begin(9600);
-  Wire.begin();                 // Inicia como Maestro I2C
-  pinMode(LED_PIN, OUTPUT);
-  
-  esp8266.begin(9600);          
-  delay(2000);
-  
-  Serial.println("==== INICIANDO SISTEMA ====");
-  conectarWiFi();
-  Serial.println("WiFi conectado correctamente ");
+### `sendData()`
+```cpp
+void sendData() {
+  Wire.write((byte*)&temperature, sizeof(temperature));
 }
+```
 
-void loop() {
-  // Leer temperatura del esclavo
-  Wire.requestFrom(SLAVE_ADDR, sizeof(float));
-  if (Wire.available() == sizeof(float)) {
-    Wire.readBytes((byte*)&temperatura, sizeof(temperatura));
-    Serial.print("🌡 Temperatura: ");
-    Serial.print(temperatura);
-    Serial.println(" °C");
+- Se ejecuta automáticamente cuando el maestro solicita datos
+- Envía los 4 bytes del float por I2C
 
-    //  Control del LED
-    if (temperatura > 30.0) {
-      digitalWrite(LED_PIN, HIGH);
-      Serial.println("Temperatura alta: LED encendido");
-    } else {
-      digitalWrite(LED_PIN, LOW);
-      Serial.println("Temperatura normal: LED apagado");
-    }
+---
 
-    // Envío a ThingSpeak
-    enviarThingSpeak(temperatura);
-  }
+### NODO MAESTRO
 
-  delay(15000);  // Espera 15 segundos entre envíos
+### `setup()`
+```cpp
+Wire.begin();              // Inicia como maestro I2C
+esp8266.begin(9600);       // Comunicación con ESP8266
+conectarWiFi();            // Conecta a la red WiFi
+```
+
+### `loop()`
+
+**1. Solicitar datos al esclavo:**
+```cpp
+Wire.requestFrom(SLAVE_ADDR, sizeof(float));
+Wire.readBytes((byte*)&temperatura, sizeof(temperatura));
+```
+
+**2. Control del LED:**
+```cpp
+if (temperatura > 30.0) {
+  digitalWrite(LED_PIN, HIGH);  // Enciende si >30°C
+} else {
+  digitalWrite(LED_PIN, LOW);   // Apaga si ≤30°C
 }
+```
 
-// -----------------------------------------------------
-// FUNCIONES AUXILIARES (AYUDADO POR CHATGPT PARA VERIFICAR CONEXION CON ESP8266 Y THINGSPEAK)
-// -----------------------------------------------------
+**3. Enviar a ThingSpeak:**
+```cpp
+enviarThingSpeak(temperatura);
+delay(15000);  // Espera 15s entre envíos
+```
 
-void conectarWiFi() {
-  Serial.println("Conectando al WiFi...");
-  enviarComando("AT", 1000);
-  enviarComando("AT+CWMODE=1", 1000);
-  
-  String cmd = "AT+CWJAP=\"" + String(SSID) + "\",\"" + String(PASSWORD) + "\"";
-  enviarComando(cmd.c_str(), 8000);
-}
+### `conectarWiFi()`
+```cpp
+enviarComando("AT", 1000);                              // Verifica ESP8266
+enviarComando("AT+CWMODE=1", 1000);                     // Modo cliente WiFi
+enviarComando("AT+CWJAP=\"SSID\",\"PASSWORD\"", 8000);  // Conecta a WiFi
+```
 
-void enviarThingSpeak(float valor) {
-  Serial.println(" Enviando datos a ThingSpeak...");
+### `enviarThingSpeak(float valor)`
 
-  String cmd = "AT+CIPSTART=\"TCP\",\"" + String(server) + "\",80";
-  String respuesta = enviarComando(cmd.c_str(), 3000);
-  if (respuesta.indexOf("Error") != -1) {
-    Serial.println("Error en la conexión TCP");
-    return;
-  }
+**1. Abre conexión TCP:**
+```cpp
+String cmd = "AT+CIPSTART=\"TCP\",\"api.thingspeak.com\",80";
+enviarComando(cmd.c_str(), 3000);
+```
 
-  String httpData = "GET /update?api_key=" + apiKey + "&field1=" + String(valor) +
-                    " HTTP/1.1\r\nHost: " + String(server) + "\r\nConnection: close\r\n\r\n";
+**2. Prepara petición HTTP GET:**
+```cpp
+String httpData = "GET /update?api_key=" + apiKey + "&field1=" + String(valor) +
+                  " HTTP/1.1\r\nHost: api.thingspeak.com\r\n\r\n";
+```
 
-  cmd = "AT+CIPSEND=" + String(httpData.length());
-  enviarComando(cmd.c_str(), 2000);
-  enviarComando(httpData.c_str(), 4000);
-  Serial.println("Datos enviados correctamente a ThingSpeak.\n");
-}
+**3. Envía datos:**
+```cpp
+cmd = "AT+CIPSEND=" + String(httpData.length());
+enviarComando(cmd.c_str(), 2000);
+enviarComando(httpData.c_str(), 4000);
+```
 
+### `enviarComando(const char* comando, const int tiempo)`
+```cpp
 String enviarComando(const char* comando, const int tiempo) {
-  String respuesta = "";
-  esp8266.println(comando);
-  long int t = millis();
+  esp8266.println(comando);     // Envía comando al ESP8266
+  
+  // Espera y captura respuesta durante 'tiempo' ms
   while ((millis() - t) < tiempo) {
     while (esp8266.available()) {
-      char c = esp8266.read();
-      respuesta += c;
+      respuesta += esp8266.read();
     }
   }
-  Serial.println(respuesta);
   return respuesta;
 }
-
-
 ```
 
 ---
