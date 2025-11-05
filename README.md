@@ -164,7 +164,7 @@ void loop() {
     enviarThingSpeak(temperatura);
   }
 
-  delay(15000);  // Espera 20 segundos entre envíos (ThingSpeak requiere mínimo 15s)
+  delay(15000);  // Espera 15 segundos entre envíos
 }
 
 // -----------------------------------------------------
