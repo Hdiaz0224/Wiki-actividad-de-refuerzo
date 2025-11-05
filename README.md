@@ -264,6 +264,13 @@ Este proyecto evidencia la aplicabilidad de soluciones IoT en el monitoreo ambie
 
 ---
 
+## Uso de inteligencia Artificial
+
+Parte del borrador de la documentación fueron elaborados con apoyo de **ChatGPT (OpenAI, 2025)**. El contenido fue revisado, adaptado y complementado por el equipo. 
+Asimismo, se le pidio ayuda a **ChatGPT (OpenAI, 2025)* para la implementacion del ESP8266 y su implementacion a ThingSpeak. El prompt fue "Ayudame a conectar el ESP8266 para enviar los datos a ThingSpeak ya que no me deja. Imprime el proceso para saber en que esta fallando"
+
+---
+
 ## Referencias
 
 * ThingSpeak IoT Analytics Platform. [https://thingspeak.com](https://thingspeak.com)
